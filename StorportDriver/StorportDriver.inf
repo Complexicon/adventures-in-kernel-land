@@ -1,0 +1,78 @@
+;
+; StorportDriver.inf
+;
+
+[Version]
+Signature="$WINDOWS NT$"
+Class=SCSIAdapter
+ClassGuid={4d36e97b-e325-11ce-bfc1-08002be10318} ; TODO: specify appropriate ClassGuid
+Provider=%ManufacturerName%
+CatalogFile=StorportDriver.cat
+DriverVer= ; TODO: set DriverVer in stampinf property pages
+DriverPackageType = PlugAndPlay
+PnpLockdown=1
+
+[DestinationDirs]
+DefaultDestDir = 12
+StorportDriver_Device_CoInstaller_CopyFiles = 11
+
+[SourceDisksNames]
+1 = %DiskName%,,,""
+
+[SourceDisksFiles]
+StorportDriver.sys  = 1,,
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll=1 ; make sure the number matches with SourceDisksNames
+
+;*****************************************
+; Install Section
+;*****************************************
+
+[Manufacturer]
+%ManufacturerName%=Standard,NT$ARCH$
+
+[Standard.NT$ARCH$]
+%StorportDriver.DeviceDesc%=StorportDriver_Device, Root\StorportDriver ; TODO: edit hw-id
+
+[StorportDriver_Device.NT]
+CopyFiles=Drivers_Dir
+
+[Drivers_Dir]
+StorportDriver.sys
+
+;-------------- Service installation
+[StorportDriver_Device.NT.Services]
+AddService = StorportDriver,%SPSVCINST_ASSOCSERVICE%, StorportDriver_Service_Inst
+
+; -------------- StorportDriver driver install sections
+[StorportDriver_Service_Inst]
+DisplayName    = %StorportDriver.SVCDESC%
+ServiceType    = 1               ; SERVICE_KERNEL_DRIVER
+StartType      = 3               ; SERVICE_DEMAND_START
+ErrorControl   = 1               ; SERVICE_ERROR_NORMAL
+ServiceBinary  = %12%\StorportDriver.sys
+
+;
+;--- StorportDriver_Device Coinstaller installation ------
+;
+
+[StorportDriver_Device.NT.CoInstallers]
+AddReg=StorportDriver_Device_CoInstaller_AddReg
+CopyFiles=StorportDriver_Device_CoInstaller_CopyFiles
+
+[StorportDriver_Device_CoInstaller_AddReg]
+HKR,,CoInstallers32,0x00010000, "WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll,WdfCoInstaller"
+
+[StorportDriver_Device_CoInstaller_CopyFiles]
+WdfCoInstaller$KMDFCOINSTALLERVERSION$.dll
+
+[StorportDriver_Device.NT.Wdf]
+KmdfService =  StorportDriver, StorportDriver_wdfsect
+[StorportDriver_wdfsect]
+KmdfLibraryVersion = $KMDFVERSION$
+
+[Strings]
+SPSVCINST_ASSOCSERVICE= 0x00000002
+ManufacturerName="cmplx" ;TODO: Replace with your manufacturer name
+DiskName = "StorportDriver Installation Disk"
+StorportDriver.DeviceDesc = "cmplx virtdisk bridge"
+StorportDriver.SVCDESC = "StorportDriver Service"
